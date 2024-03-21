@@ -4,8 +4,8 @@ import 'package:intento_dos/Opcion.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
 
 void main() {
   runApp(
@@ -84,16 +84,17 @@ class _MyHomePageState extends State<MyHomePage> {
             botones(getImage),
             ElevatedButton(
               onPressed: () {
-                int? id = Provider.of<SelectedOption>(context, listen: false).selectedOptionId;
+                int? id = Provider.of<SelectedOption>(context, listen: false)
+                    .selectedOptionId;
                 print("id: " + id.toString());
                 print(_image.toString());
                 if (id == null || _image == null) {
-
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: const Text('Error no ha tomado una foto o no ha seleccionado una categoria'),
+                        title: const Text(
+                            'Error no ha tomado una foto o no ha seleccionado una categoria'),
                         actions: <Widget>[
                           TextButton(
                             child: const Text('Volver a intentar'),
@@ -112,12 +113,39 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     child: Text("Limpiar"),
                   );
-                  uploadImage(_image!, id);
+                  bool resp = uploadImage(_image!, id) as bool;
+                  if (resp == false) {
+                    AlertDialog(
+                      title: const Text('Error al subir la imagen'),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Volver a intentar'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            reloadApp();
+                          },
+                        ),
+                      ],
+                    );
+                  } else {
+                    AlertDialog(
+                      title: const Text('Imagen subida correctamente'),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Volver a intentar'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            reloadApp();
+                          },
+                        ),
+                      ],
+                    );
+                  }
                 }
               },
               child: Text("Enviar"),
             ),
-             // Pasar getImage como argumento a botones
+            // Pasar getImage como argumento a botones
           ],
         ),
       ),
@@ -137,12 +165,11 @@ class botones extends StatelessWidget {
         ElevatedButton(
           onPressed: () async {
             // Hacer que onPressed sea una función asíncrona
-            var image = getImage();// Esperar el resultado de getImage
+            var image = getImage(); // Esperar el resultado de getImage
           },
           child: Text("Tomar foto"),
         ),
         SizedBox(width: 10), // Espacio entre los botones
-
       ],
     );
   }
@@ -172,7 +199,6 @@ class SelectedOption extends ChangeNotifier {
 class opciones extends StatefulWidget {
   @override
   _opcionesState createState() => _opcionesState();
-
 }
 
 class _opcionesState extends State<opciones> {
@@ -195,11 +221,13 @@ class _opcionesState extends State<opciones> {
             items: snapshot.data!.map<DropdownMenuItem<int>>((Opcion opcion) {
               return DropdownMenuItem<int>(
                 value: opcion.id,
-                child: Text(opcion.op, style: Theme.of(context).textTheme.bodyText1),
+                child: Text(opcion.op,
+                    style: Theme.of(context).textTheme.bodyText1),
               );
             }).toList(),
             onChanged: (int? newId) {
-              Provider.of<SelectedOption>(context, listen: false).setSelectedOptionId(newId);
+              Provider.of<SelectedOption>(context, listen: false)
+                  .setSelectedOptionId(newId);
               print("Opcion seleccionada: $newId");
             },
           );
@@ -252,14 +280,29 @@ class _tomarFotoState extends State<tomarFoto> {
   }
 }
 
-Future<void> uploadImage(XFile image, int id) async {
-  var request = http.MultipartRequest('POST', Uri.parse('https://localhost:8000/upload'));
-  request.files.add(await http.MultipartFile.fromPath('image', image.path));
-  request.fields['id'] = id.toString();
+Future<bool> uploadImage(XFile image, int id) async {
+  // Convertir la imagen en un MultipartFile
+  var request = http.MultipartRequest(
+      'POST', Uri.parse('http://172.27.27.209:8000/guardar_imagen'));
+  request.files.add(await http.MultipartFile.fromPath(
+    'image',
+    image.path,
+    contentType: MediaType('image', 'jpeg'),
+  ));
+
+  // Agregar la etiqueta de clase al cuerpo de la solicitud
+  request.fields['class_label'] = id.toString();
+
+  // Enviar la solicitud POST
   var response = await request.send();
+
   if (response.statusCode == 200) {
-    print("Image uploaded");
-  } else {
-    print("Image not uploaded");
+    return true;
   }
+  return false;
+}
+
+Future<void> reloadApp() async {
+  await Future.delayed(Duration(seconds: 2));
+  runApp(MyApp());
 }

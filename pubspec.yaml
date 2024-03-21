@@ -39,6 +39,7 @@ dependencies:
   mysql1: ^0.20.0
   image_picker: ^1.0.4
   http: ^1.1.2
+  ftpconnect: ^2.0.7
 
 dev_dependencies:
   flutter_test:
