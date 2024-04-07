@@ -28,7 +28,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Banco de imagenes'),
+      home: ChangeNotifierProvider(
+        create: (context) => SelectedOption(),
+        child: const MyHomePage(title: 'Banco de imagenes'),
+      ),
     );
   }
 }
@@ -62,91 +65,95 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            mostrarTitulo(),
-            Container(
-              width: 250,
-              height: 250,
-              color: Colors.grey,
-              child: Center(
-                child: _image == null
-                    ? Text('Aqui va la foto')
-                    : Image.file(File(_image!.path)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              mostrarTitulo(),
+              Container(
+                width: 250,
+                height: 250,
+                color: Colors.grey,
+                child: Center(
+                  child: _image == null
+                      ? Text('Aqui va la foto')
+                      : Image.file(File(_image!.path)),
+                ),
               ),
-            ),
-            const Text(
-              'Opciones:',
-              style: TextStyle(fontSize: 20),
-            ),
-            opciones(),
-            botones(getImage),
-            ElevatedButton(
-              onPressed: () {
-                int? id = Provider.of<SelectedOption>(context, listen: false)
-                    .selectedOptionId;
-                print("id: " + id.toString());
-                print(_image.toString());
-                if (id == null || _image == null) {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text(
-                            'Error no ha tomado una foto o no ha seleccionado una categoria'),
+              const Text(
+                'Opciones:',
+                style: TextStyle(fontSize: 20),
+              ),
+              ChangeNotifierProvider(
+                create: (context) => SelectedOption(),
+                child: opciones(),
+              ),
+              botones(getImage),
+              ElevatedButton(
+                onPressed: () {
+                  int? id = Provider.of<SelectedOption>(context, listen: false)
+                      .selectedOptionId;
+                  print("id: " + id.toString());
+                  print(_image.toString());
+                  if (id == null || _image == null) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text(
+                              'Error no ha tomado una foto o no ha seleccionado una categoria'),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('Volver a intentar'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    ElevatedButton(
+                      onPressed: () {
+                        _image = null;
+                      },
+                      child: Text("Limpiar"),
+                    );
+                    bool resp = uploadImage(_image!, id) as bool;
+                    if (resp == false) {
+                      AlertDialog(
+                        title: const Text('Error al subir la imagen'),
                         actions: <Widget>[
                           TextButton(
                             child: const Text('Volver a intentar'),
                             onPressed: () {
                               Navigator.of(context).pop();
+                              reloadApp();
                             },
                           ),
                         ],
                       );
-                    },
-                  );
-                } else {
-                  ElevatedButton(
-                    onPressed: () {
-                      _image = null;
-                    },
-                    child: Text("Limpiar"),
-                  );
-                  bool resp = uploadImage(_image!, id) as bool;
-                  if (resp == false) {
-                    AlertDialog(
-                      title: const Text('Error al subir la imagen'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Volver a intentar'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            reloadApp();
-                          },
-                        ),
-                      ],
-                    );
-                  } else {
-                    AlertDialog(
-                      title: const Text('Imagen subida correctamente'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Volver a intentar'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            reloadApp();
-                          },
-                        ),
-                      ],
-                    );
+                    } else {
+                      AlertDialog(
+                        title: const Text('Imagen subida correctamente'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Volver a intentar'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              reloadApp();
+                            },
+                          ),
+                        ],
+                      );
+                    }
                   }
-                }
-              },
-              child: Text("Enviar"),
-            ),
-            // Pasar getImage como argumento a botones
-          ],
+                },
+                child: Text("Enviar"),
+              ),
+            ],
+          ),
         ),
       ),
     );

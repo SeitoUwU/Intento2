@@ -1,7 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
+import 'package:intento_dos/Usuario.dart';
 import 'Register.dart';
+import 'main.dart';
 
 void main() {
   runApp(
@@ -24,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   String _username = '';
   String _password = '';
+  Usuario usuario = Usuario('', '', 0);
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +84,34 @@ class _LoginPageState extends State<LoginPage> {
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
                                         _formKey.currentState!.save();
-                                        print('Username: $_username');
-                                        print('Password: $_password');
+                                        usuario
+                                            .getAutenticationUser(
+                                                _username, _password)
+                                            .then((value) {
+                                          if (value) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => MyHomePage(
+                                                    title: 'Banco de imagenes'),
+                                              ),
+                                            );
+                                          } else {
+                                            AlertDialog(
+                                              title: Text('Error'),
+                                              content: Text(
+                                                  'Usuario o contraseña incorrectos'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text('Aceptar'),
+                                                ),
+                                              ],
+                                            );
+                                          }
+                                        });
                                       }
                                     },
                                   ),
