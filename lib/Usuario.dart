@@ -30,4 +30,18 @@ class Usuario{
       return false;
     }
   }
+
+  Future<bool> register(String user, String pass) async{
+   final con = await getConnection();
+   try{
+     await con.query(
+         'call Registro(?,?)',
+         [user, pass]
+     );
+     return true;
+   }catch(e){
+     await con.close();
+     return false;
+   }
+  }
 }

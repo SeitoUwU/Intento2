@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
+import 'package:intento_dos/Usuario.dart';
+
 class RegisterPage extends StatefulWidget {
   @override
   _RegisterPageState createState() => _RegisterPageState();
@@ -11,6 +13,7 @@ class _RegisterPageState extends State<RegisterPage> {
   String _username = '';
   String _password1 = '';
   String _password2 = '';
+  Usuario usuario = Usuario('', '', 0);
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +60,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: InputDecoration(
                                 labelText: 'Confirme la contraseña'),
                             obscureText: true,
-                            validator: (value) {
-                              if (value != _password1) {
-                                return 'Las contraseñas no coinciden';
-                              }
-                              return null;
-                            },
                             onSaved: (value) {
                               _password2 = value!;
                             },
@@ -70,10 +67,62 @@ class _RegisterPageState extends State<RegisterPage> {
                           ElevatedButton(
                             child: Text('Registrarse'),
                             onPressed: () {
+                              print("object");
                               if (_formKey.currentState!.validate()) {
                                 _formKey.currentState!.save();
-                                print('Username: $_username');
-                                print('Password: $_password1');
+                                print("object");
+                                if (_password1 != _password2) {
+                                  print("object error");
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('Error'),
+                                        content: Text(
+                                            'Las contraseñas no coinciden'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  print("object Ingreso");
+                                  Future<bool> result = usuario.register(_username, _password1);
+                                  if(result == true){
+                                    print("object exitoso");
+                                    AlertDialog(
+                                      title: Text('Registro exitoso'),
+                                      content: Text('Usuario registrado correctamente'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text('Aceptar'),
+                                        ),
+                                      ],
+                                    );
+                                  }else{
+                                    AlertDialog(
+                                      title: Text('Error'),
+                                      content: Text('Error al registrar el usuario'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text('Aceptar'),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                }
                               }
                             },
                           ),
